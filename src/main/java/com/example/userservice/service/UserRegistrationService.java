@@ -19,18 +19,19 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
 @AllArgsConstructor
-public class UserRegistrationService {
+public class UserRegistrationService implements UserDetailsService {
     private static final Logger log = LoggerFactory.getLogger(UserRegistrationService.class);
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService JwtTokenProvider;
     private final TokenRepository tokenRepository;
+    private final EntityManager entityManager;
     private final UserBuilder userBuilder;
-    private final UserDetailsService userDetailsService;
 
 
     public boolean isUserNameAlreadyExists(String userName) {
@@ -49,6 +50,14 @@ public class UserRegistrationService {
     }
 
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        log.info("Loading user by username: {}", username);
+        return userRepository
+                .findByUserName(username)
+                .orElseThrow(() -> new UsernameNotFoundException(username));
+    }
+
     public UserRegistrationResponseDTO registerUser(UserRegistrationRequestDTO userRegistrationRequestDTO) {
         log.debug("Registering new user with DTO: {}", userRegistrationRequestDTO);
         User user = userBuilder.buildUser(userRegistrationRequestDTO);
@@ -65,7 +74,7 @@ public class UserRegistrationService {
                 )
         );
 
-        var user = userDetailsService.loadUserByUsername(request.getUserName());
+        var user = loadUserByUsername(request.getUserName());
 
         var jwtToken = JwtTokenProvider.generateToken(user);
 
@@ -100,5 +109,23 @@ public class UserRegistrationService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
+
+//    public List<Token> findAllValidTokenByUser(String userId) {
+//        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+//        CriteriaQuery<Token> query = cb.createQuery(Token.class);
+//        Root<Token> tokenRoot = query.from(Token.class);
+//
+//        Join<Token, User> userJoin = tokenRoot.join("user");
+//        Predicate userIdPredicate = cb.equal(userJoin.get("id"), userId);
+//        Predicate tokenValidPredicate = cb.or(
+//                cb.equal(tokenRoot.get("expired"), false),
+//                cb.equal(tokenRoot.get("revoked"), false)
+//        );
+//
+//        query.select(tokenRoot)
+//                .where(userIdPredicate, tokenValidPredicate);
+//
+//        return entityManager.createQuery(query).getResultList();
+//    }
 
 }
