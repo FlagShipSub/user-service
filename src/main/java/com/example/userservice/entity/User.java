@@ -42,14 +42,14 @@ public class User implements UserDetails {
     private Gender gender;
 
     @Column(nullable = false, columnDefinition = "boolean default false")
-    private Boolean isRemoved = false;
+    private Boolean isRemoved;
 
     @Column(nullable = false, columnDefinition = "boolean default false")
-    private Boolean isEnabled = true;
+    private Boolean isEnabled;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Roles rolesAssigned = Roles.USER;
+    private Roles rolesAssigned;
 
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "credential_id", referencedColumnName = "id")
