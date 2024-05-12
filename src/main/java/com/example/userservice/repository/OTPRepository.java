@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface OTPRepository extends JpaRepository<OTP, Long> {
 
-    Optional<OTP> findByEmailAndOtpValueAndVerifiedIsFalse(String email, Integer otpValue);
+    Optional<OTP> findByEmailAndOtpValueAndIsVerifiedIsFalse(String email, Integer otpValue);
 
     @Modifying
     @Transactional
@@ -20,7 +20,7 @@ public interface OTPRepository extends JpaRepository<OTP, Long> {
             UPDATE      OTP o
             SET         o.otpValue = :#{#otp.otpValue},
                         o.expiryTime = :#{#otp.expiryTime},
-                        o.verified = false
+                        o.isVerified = false
             WHERE       o.email = :#{#otp.email}
     """)
     void updateByEmail(OTP otp);

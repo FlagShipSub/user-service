@@ -25,5 +25,5 @@ public class OTP {
 
     public LocalDateTime expiryTime;
 
-    public boolean verified;
+    public boolean isVerified;
 }

@@ -15,7 +15,7 @@ public class OTPVerificationService {
     private OTPRepository otpRepository;
 
     public boolean verifyOTP(String email, Integer otp) {
-        Optional<OTP> optionalOTP = otpRepository.findByEmailAndOtpValueAndVerifiedIsFalse(email, otp);
+        Optional<OTP> optionalOTP = otpRepository.findByEmailAndOtpValueAndIsVerifiedIsFalse(email, otp);
 
         if (optionalOTP.isPresent()) {
             OTP otpEntity = optionalOTP.get();
