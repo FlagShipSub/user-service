@@ -1,7 +1,8 @@
-package com.example.userservice.service;
+package com.example.userservice.service.OTP;
 
 import com.example.userservice.entity.OTP;
 import com.example.userservice.repository.OTPRepository;
+import com.example.userservice.service.Email.IEmailService;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,13 @@ import java.util.Random;
 
 @AllArgsConstructor
 @Service
-public class OTPGenerationService {
+public class OTPGenerationService implements IOTPGenerationService {
 
     private OTPRepository otpRepository;
 
-    public Integer generateOTP(String email) {
+    private IEmailService emailService;
+
+    public void generateOTP(String email) {
         // Generate a random 6-digit OTP
         Integer otpValue = generateRandomOTP();
 
@@ -25,13 +28,13 @@ public class OTPGenerationService {
         otpEntity.setOtpValue(otpValue);
         otpEntity.setExpiryTime(LocalDateTime.now().plusMinutes(5)); // Set expiry time to 5 minutes from now
         otpEntity.setVerified(false); // Set OTP as not verified initially
+
+        emailService.sendOtpMessage(email, otpValue);
         try {
             otpRepository.save(otpEntity);
         } catch (DataIntegrityViolationException e) {
             otpRepository.updateByEmail(otpEntity);
         }
-
-        return otpValue;
     }
 
     private Integer generateRandomOTP() {

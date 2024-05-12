@@ -1,19 +1,19 @@
-package com.example.userservice.service;
+package com.example.userservice.service.Email;
 
+import freemarker.template.Configuration;
 import freemarker.template.Template;
+import jakarta.mail.internet.MimeMessage;
 import lombok.AllArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
-import freemarker.template.Configuration;
-import jakarta.mail.internet.MimeMessage;
 
 import java.util.Map;
 
 @AllArgsConstructor
 @Service
-public class EmailService {
+public class EmailService implements IEmailService {
 
     private JavaMailSender javaMailSender;
 
@@ -33,6 +33,7 @@ public class EmailService {
             return false;
         }
     }
+
     public Boolean sendHtmlMail(Map<String, String> model) {
         try {
             Template template = config.getTemplate("email_template.ftl");

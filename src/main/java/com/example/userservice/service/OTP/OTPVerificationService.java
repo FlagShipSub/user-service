@@ -1,4 +1,4 @@
-package com.example.userservice.service;
+package com.example.userservice.service.OTP;
 
 import com.example.userservice.entity.OTP;
 import com.example.userservice.repository.OTPRepository;
@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @AllArgsConstructor
 @Service
-public class OTPVerificationService {
+public class OTPVerificationService implements IOTPVerificationService {
 
     private OTPRepository otpRepository;
 
