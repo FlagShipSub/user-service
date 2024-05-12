@@ -11,7 +11,6 @@ import com.example.userservice.mapper.UserBuilder;
 import com.example.userservice.repository.TokenRepository;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.security.config.JwtService;
-import jakarta.persistence.EntityManager;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
