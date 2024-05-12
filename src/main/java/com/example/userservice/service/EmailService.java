@@ -1,7 +1,7 @@
 package com.example.userservice.service;
 
 import freemarker.template.Template;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -9,28 +9,27 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import freemarker.template.Configuration;
 import jakarta.mail.internet.MimeMessage;
 
-import java.util.Arrays;
 import java.util.Map;
 
+@AllArgsConstructor
 @Service
 public class EmailService {
-    @Autowired
+
     private JavaMailSender javaMailSender;
-    @Autowired
+
     private Configuration config;
 
-    public Boolean sendOtpMessage(String to, Integer otp) {
+    public Boolean sendOtpMessage(String recipient, Integer otp) {
         try {
             MimeMessage msg = javaMailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, true);
-            helper.setTo(to);
+            helper.setTo(recipient);
             helper.setSubject("OTP Verification");
             helper.setText("OTP to verify your account is: " + otp);
             javaMailSender.send(msg);
             return true;
         }
         catch(Exception e){
-            System.out.println(e.getMessage());
             return false;
         }
     }
@@ -47,7 +46,6 @@ public class EmailService {
             return true;
         }
         catch (Exception e) {
-            System.out.println(e.getMessage());
             return false;
         }
     }
