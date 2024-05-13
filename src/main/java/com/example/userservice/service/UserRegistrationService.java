@@ -8,10 +8,16 @@ import com.example.userservice.entity.Token;
 import com.example.userservice.entity.TokenType;
 import com.example.userservice.entity.User;
 import com.example.userservice.mapper.UserBuilder;
+import com.example.userservice.repository.TokenCustomRepository;
 import com.example.userservice.repository.TokenRepository;
 import com.example.userservice.repository.UserRepository;
 import com.example.userservice.security.config.JwtService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,8 +26,10 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class UserRegistrationService {
     private static final Logger log = LoggerFactory.getLogger(UserRegistrationService.class);
     private final UserRepository userRepository;
@@ -30,6 +38,7 @@ public class UserRegistrationService {
     private final TokenRepository tokenRepository;
     private final UserBuilder userBuilder;
     private final UserDetailsService userDetailsService;
+    private final TokenCustomRepository tokenCustomRepository;
 
 
     public boolean isUserNameAlreadyExists(String userName) {
@@ -83,14 +92,14 @@ public class UserRegistrationService {
                 .user((User) user)
                 .token(jwtToken)
                 .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
+                .isExpired(false)
+                .isRevoked(false)
                 .build();
         tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        var validUserTokens = tokenCustomRepository.findAllValidTokenByUser(user.getId());
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
