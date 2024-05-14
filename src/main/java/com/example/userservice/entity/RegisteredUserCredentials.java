@@ -19,8 +19,4 @@ public class RegisteredUserCredentials {
     @Column(nullable = false)
     private String password;
 
-    @Lob
-    @Column(columnDefinition = "BLOB")
-    private byte[] passwordSalt;
-
 }

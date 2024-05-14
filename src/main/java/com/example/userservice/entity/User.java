@@ -57,7 +57,7 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return rolesAssigned.name().equals("ADMIN") ?
+        return "ADMIN".equals(rolesAssigned.name()) ?
                 Arrays.asList(
                         new SimpleGrantedAuthority(Roles.USER.name()),
                         new SimpleGrantedAuthority(Roles.ADMIN.name())
