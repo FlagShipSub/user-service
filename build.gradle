@@ -45,6 +45,7 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-freemarker')
     implementation('org.flywaydb:flyway-core')
     implementation('org.flywaydb:flyway-mysql')
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.5.0'
 }
 
 tasks.named('test') {

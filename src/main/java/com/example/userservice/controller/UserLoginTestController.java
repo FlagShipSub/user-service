@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping(path = "api/v1/login")
-public class DummyController {
+public class UserLoginTestController {
     @GetMapping(value = "/test")
     public ResponseEntity<String> testApplication() {
         return new ResponseEntity<>("Hello World", HttpStatus.OK);
