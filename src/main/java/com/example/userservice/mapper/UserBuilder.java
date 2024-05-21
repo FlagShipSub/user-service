@@ -28,7 +28,7 @@ public class UserBuilder {
     }
 
     private Gender getGender(String gender) {
-        return "MALE".equals(gender) ? Gender.MALE : Gender.FEMALE;
+        return "MALE".equalsIgnoreCase(gender) ? Gender.MALE : Gender.FEMALE;
     }
 
     private Roles getRoles(boolean isAdmin) {
