@@ -11,8 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DATABASE_URL: ${{ vars.DATABASE_URL }}
-      MY_ENV_VAR: ${{ vars.MY_ENV_VAR }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
       JAVA_HOME_19_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
 
@@ -28,9 +32,6 @@ jobs:
 
       - name: Echo Database URL
         run: echo $DATABASE_URL
-
-      - name: Echo Env Variables
-        run: echo $MY_ENV_VAR
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
