@@ -44,6 +44,9 @@ dependencies {
     implementation('org.springframework.boot:spring-boot-starter-mail')
     implementation('org.springframework.boot:spring-boot-starter-freemarker')
     implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.5.0'
+    implementation 'mysql:mysql-connector-java:5.1.13'
+    implementation 'com.google.cloud.sql:mysql-socket-factory-connector-j-8:1.0.10'
+
 }
 
 tasks.named('test') {
