@@ -1,0 +1,12 @@
+version: '3'
+services:
+  my-spring-boot-app:
+    image: ${DOCKER_USERNAME}/user-auth-image:latest
+    ports:
+      - "8080:8080"
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: my-ecs-log-group
+        awslogs-region: us-east-1
+        awslogs-stream-prefix: my-app
