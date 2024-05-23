@@ -1,7 +1,7 @@
 version: '3'
 services:
   my-spring-boot-app:
-    image: ${DOCKER_USERNAME}/user-auth-image:latest
+    image: rpattem/user-auth-image:latest
     ports:
       - "8080:8080"
     logging:

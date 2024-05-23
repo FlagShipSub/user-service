@@ -61,3 +61,30 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
+      - name: Deploy to ECS
+        env:
+          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        run: |
+          echo "version: '3'
+          services:
+            my-spring-boot-app:
+              image: rpattem/user-auth-image:latest
+              ports:
+                - \"8080:8080\"
+              environment:
+                DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+                DATABASE_URL: ${{ secrets.DATABASE_URL }}
+                DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+                EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+                EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+                JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}" > docker-compose.yml
+
+          ecs-cli configure profile --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile-name ecsProfile
+          ecs-cli configure --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --region us-east-1 --default-launch-type FARGATE --config-name myConfig
+          ecs-cli compose --file docker-compose.yml up --create-log-groups --cluster-config myConfig
