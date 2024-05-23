@@ -100,4 +100,4 @@ jobs:
 
           task_definition=$(aws ecs describe-task-definition --task-definition my-spring-boot-app | jq -r '.taskDefinition.taskDefinitionArn')
 
-          aws ecs update-service --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --service my-spring-boot-app --network-configuration "awsvpcConfiguration={subnets=[subnet-abc123],securityGroups=[sg-abc123],assignPublicIp=ENABLED}" --task-definition "$task_definition"
+          aws ecs update-service --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --service my-spring-boot-app --network-configuration "awsvpcConfiguration={subnets=[subnet-c75103c9],securityGroups=[sg-07d9f70b],assignPublicIp=ENABLED}" --task-definition "$task_definition"
