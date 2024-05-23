@@ -89,9 +89,15 @@ jobs:
                 DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
                 EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
                 EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-                JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-              network_mode: 'awsvpc'" > docker-compose.yml
+                JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}" > docker-compose.yml
 
           ecs-cli configure profile --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile-name ecsProfile
           ecs-cli configure --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --region us-east-1 --default-launch-type FARGATE --config-name myConfig
+          
           ecs-cli compose --file docker-compose.yml service up --create-log-groups --cluster-config myConfig
+
+          ecs-cli compose --file docker-compose.yml service ps --cluster-config myConfig
+
+          task_definition=$(aws ecs describe-task-definition --task-definition my-spring-boot-app | jq -r '.taskDefinition.taskDefinitionArn')
+
+          aws ecs update-service --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --service my-spring-boot-app --network-configuration "awsvpcConfiguration={subnets=[subnet-abc123],securityGroups=[sg-abc123],assignPublicIp=ENABLED}" --task-definition "$task_definition"
