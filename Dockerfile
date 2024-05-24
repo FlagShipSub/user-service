@@ -1,4 +1,3 @@
-# Use the official OpenJDK 8 image as the base image
 FROM openjdk:19
 
 # Expose port 8080 to allow external access to the application
