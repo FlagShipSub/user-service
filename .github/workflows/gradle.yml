@@ -1,70 +1,68 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
-
-name: Java CI with Gradle
+name: CI/CD Pipeline
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+
+    env:
+      DATABASE_URL: jdbc:mysql://localhost:3306/mydatabase
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: rootpassword
+      EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
+      EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
+      JAVA_HOME_19_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 19
-      uses: actions/setup-java@v4
-      with:
-        java-version: '19'
-        distribution: 'temurin'
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    # Configure Gradle for optimal use in GiHub Actions, including caching of downloaded dependencies.
-    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-         
-    - name: Clean Build
-      run: ./gradlew clean
+      - name: Set up JDK 19
+        uses: actions/setup-java@v4
+        with:
+          java-version: '19'
+          distribution: 'temurin'
 
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
-    # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-    # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
-    #
-    # - name: Setup Gradle
-    #   uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-    #   with:
-    #     gradle-version: '8.5'
-    #
-    # - name: Build with Gradle 8.5
-    #   run: gradle build
+      - name: Start MySQL container
+        run: |
+          docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=rootpassword -e MYSQL_DATABASE=mydatabase -p 3306:3306 -d mysql:latest
+          docker ps -a
 
-  dependency-submission:
+      - name: Wait for MySQL to start
+        run: |
+          until docker exec mysql-container mysqladmin --user=root --password=rootpassword --host "127.0.0.1" ping --silent &> /dev/null ; do
+            echo "Waiting for database connection..."
+            sleep 2
+          done
+          echo "Database is up and running"
 
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+      - name: Clean Build
+        run: ./gradlew clean
 
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 19
-      uses: actions/setup-java@v4
-      with:
-        java-version: '19'
-        distribution: 'temurin'
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
 
-    # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
-    # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
-    - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      - name: Log in to Docker Hub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/user-auth-image:latest .
+
+      - name: Push Docker image to Docker Hub
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/user-auth-image:latest
+
+      - name: Stop MySQL container
+        run: docker stop mysql-container
+
+      - name: Remove MySQL container
+        run: docker rm mysql-container
