@@ -11,15 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_URL: jdbc:mysql://localhost:3306/mydatabase
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: rootpassword
       EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
       EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
       JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
       JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
       JAVA_HOME_19_X64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/19.0.2-7/x64
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -32,6 +32,19 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
+
+      - name: Start MySQL container
+        run: |
+          docker run --name mysql-container -e MYSQL_ROOT_PASSWORD=rootpassword -e MYSQL_DATABASE=mydatabase -p 3306:3306 -d mysql:latest
+          docker ps -a
+
+      - name: Wait for MySQL to start
+        run: |
+          until docker exec mysql-container mysqladmin --user=root --password=rootpassword --host "127.0.0.1" ping --silent &> /dev/null ; do
+            echo "Waiting for database connection..."
+            sleep 2
+          done
+          echo "Database is up and running"
 
       - name: Clean Build
         run: ./gradlew clean
@@ -48,56 +61,8 @@ jobs:
       - name: Push Docker image to Docker Hub
         run: docker push ${{ secrets.DOCKER_USERNAME }}/user-auth-image:latest
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
+      - name: Stop MySQL container
+        run: docker stop mysql-container
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install ECS CLI
-        run: |
-          sudo curl -o /usr/local/bin/ecs-cli https://amazon-ecs-cli.s3.amazonaws.com/ecs-cli-linux-amd64-latest
-          sudo chmod +x /usr/local/bin/ecs-cli
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy to ECS
-        env:
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-        run: |
-          echo "version: '3'
-          services:
-            my-spring-boot-app:
-              image: ${{ secrets.DOCKER_USERNAME }}/user-auth-image:latest
-              ports:
-                - \"8080:8080\"
-              environment:
-                DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-                DATABASE_URL: ${{ secrets.DATABASE_URL }}
-                DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-                EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-                EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
-                JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}" > docker-compose.yml
-
-          ecs-cli configure profile --access-key ${{ secrets.AWS_ACCESS_KEY_ID }} --secret-key ${{ secrets.AWS_SECRET_ACCESS_KEY }} --profile-name ecsProfile
-          ecs-cli configure --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --region us-east-1 --default-launch-type FARGATE --config-name myConfig
-          
-          ecs-cli compose --file docker-compose.yml service up --create-log-groups --cluster-config myConfig
-
-          ecs-cli compose --file docker-compose.yml service ps --cluster-config myConfig
-
-          task_definition=$(aws ecs describe-task-definition --task-definition my-spring-boot-app | jq -r '.taskDefinition.taskDefinitionArn')
-
-          aws ecs update-service --cluster arn:aws:ecs:us-east-1:690394809099:cluster/flagShipSub --service my-spring-boot-app --network-configuration "awsvpcConfiguration={subnets=[subnet-c75103c9],securityGroups=[sg-07d9f70b],assignPublicIp=ENABLED}" --task-definition "$task_definition"
+      - name: Remove MySQL container
+        run: docker rm mysql-container
