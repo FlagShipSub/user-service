@@ -7,6 +7,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
+import org.apache.commons.logging.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,19 +28,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenRepository tokenRepository;
     private final UserDetailsService userDetailsService;
 
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
         if (isRegistrationRequest(request)) {
+            logger.debug("The current request is a RegistrationRequest so propagating to next filter");
             filterChain.doFilter(request, response);
             return;
         }
 
+        logger.debug("The current request is not a RegistrationRequest");
+
         final String authHeader = request.getHeader("Authorization");
 
         if (isInvalidAuthHeader(authHeader)) {
+            logger.debug("Authorization header {} is invalid for the current request", authHeader);
             filterChain.doFilter(request, response);
             return;
         }
@@ -45,12 +54,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt = extractJwt(authHeader);
         final String username = jwtService.extractUsername(jwt);
 
+        logger.debug("Username extracted from jwt: {}", username);
+
         if (isValidUsername(username)
                 && isUserNotAuthenticated()
         ) {
+            logger.debug("Current username is valid and is not Authenticated");
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (isTokenValid(jwt, userDetails)) {
+                logger.debug("The current token {} is valid", jwt);
                 setAuthenticationContext(request, userDetails);
+                logger.debug("Authentication Context set successfully");
             }
         }
 
